@@ -3,7 +3,7 @@ name: Check Joe Sessions
 on:
   schedule:
     - cron: "0 9,20 * * *" 	#9am, 8pm UTC
-      workflow_dispatch:    # allow manual trigger	
+  workflow_dispatch:    # allow manual trigger	
 jobs:
   check:
     runs-on: ubuntu-latest	
