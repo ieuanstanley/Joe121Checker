@@ -1,4 +1,7 @@
+import smtplib
+from email.mime.text import MIMEText
 from playwright.sync_api import sync_playwright
+import os
 
 URL = "https://bookwhen.com/jacricket"
 
@@ -15,6 +18,7 @@ def check_sessions():
         # Get agenda list items
         rows = page.query_selector_all("tbody tr")
         results = []
+        results.append("Available Sessions:")
        
         for r in rows:
         
@@ -33,7 +37,7 @@ def check_sessions():
             
             
             
-            duration_text = duration.inner_text().strip() if duration else "N/A"
+            time_text = duration.inner_text().strip() if duration else "N/A"
             summary_text = summary.inner_text().strip() if summary else "N/A"
             date_text = date.inner_text().strip() if date else date_text
             day_text = day.inner_text().strip() if day else day_text
@@ -47,20 +51,26 @@ def check_sessions():
             if status == "Fully Booked":
                 continue
             
-            results.append({
-                "time": duration_text,
-                "summary": summary_text,
-                "status": status,
-                "day": day_text,
-                "date": date_text,
-                "month": current_month
-            })
+            results.append(f"{current_month} {date_text} {day_text} - {time_text} - {summary_text}")
         
         browser.close()
-        return results
-        
+        return "\n".join(results)
+      
+def send_email(message):
+    sender = os.environ["EMAIL_USER"]
+    recipient = os.environ["EMAIL_TO"]
+    password = os.environ["EMAIL_PASS"]
+    
+    msg = MIMEText(message)
+    msg["Subject"] = "Joe Ashdown - Available Sessions"
+    msg["From"] = sender
+    msg ["To"] = recipient
+    
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(sender, password)
+        sender.sendmail(sender, recipient, msg.as_string())
+
 if __name__ == "__main__":
-    sessions = check_sessions()
-    print(f"Available Sessions:")
-    for s in sessions:
-        print(f"{s['month']} {s['date']} {s['day']} - {s['time']} - {s['summary']}")
+    report = check_sessions()
+    send_email(report)
+    print("Report Sent!")
